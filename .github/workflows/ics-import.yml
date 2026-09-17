@@ -1,0 +1,17 @@
+name: ics-import
+on:
+  workflow_dispatch:
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Parse ICS
+        run: node parse-ics.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: surf-events
+          path: surf-events.json
