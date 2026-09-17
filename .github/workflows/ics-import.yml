@@ -15,20 +15,12 @@ jobs:
           node-version: 20
       - name: Parse ICS
         run: node parse-ics.js
-      - name: Split JSON
-        run: node -e "
-const fs=require('fs');
-const j=fs.readFileSync('surf-events.json','utf8');
-const size=8000;
-let i=0;
-for(let off=0;off<j.length;off+=size){i++;
-fs.writeFileSync('parts/part-'+String(i).padStart(2,'0')+'.json',j.slice(off,off+size));}
-fs.writeFileSync('parts/count.txt',String(i));
-"
+        env:
+          ICS_URL: https://outlook.office365.com/owa/calendar/0f17d7dd19d54501bd794b502804a3c8@surf.nl/ef608d548b7f48228037c262897bf2029943935942078287197/calendar.ics
       - name: Commit results
         run: |
           git config user.name "ics-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add parts surf-events.json raw.ics
+          git add raw.ics surf-events.json parts
           git commit -m "parsed ics" || echo "nothing to commit"
           git push
