@@ -1,6 +1,10 @@
 name: ics-import
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: write
 jobs:
   parse:
     runs-on: ubuntu-latest
@@ -11,7 +15,20 @@ jobs:
           node-version: 20
       - name: Parse ICS
         run: node parse-ics.js
-      - uses: actions/upload-artifact@v4
-        with:
-          name: surf-events
-          path: surf-events.json
+      - name: Split JSON
+        run: node -e "
+const fs=require('fs');
+const j=fs.readFileSync('surf-events.json','utf8');
+const size=8000;
+let i=0;
+for(let off=0;off<j.length;off+=size){i++;
+fs.writeFileSync('parts/part-'+String(i).padStart(2,'0')+'.json',j.slice(off,off+size));}
+fs.writeFileSync('parts/count.txt',String(i));
+"
+      - name: Commit results
+        run: |
+          git config user.name "ics-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add parts surf-events.json raw.ics
+          git commit -m "parsed ics" || echo "nothing to commit"
+          git push
